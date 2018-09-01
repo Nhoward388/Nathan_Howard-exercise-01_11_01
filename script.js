@@ -11,9 +11,9 @@
 
 // global variables
 var selectedCity = "Tucson, AZ"; //default location
-var weatherReport = null;
+var weatherReport = null; //holds our response data
 //var to hold XHR object
-var httpRequest = false;
+var httpRequest = false; //have an XHR object?
 
 //function to get a request object
 function getRequestObject() {
@@ -26,6 +26,72 @@ function getRequestObject() {
         return false;
     }
     return httpRequest;
+}
+
+//function is an eventHandler for onreadystatechange
+//    get the weather data if successful
+function fillWeather() {
+//    check the ready state
+    if (httpRequest.readyState === 4 && httpRequest.status === 200) {
+        weatherReport = JSON.parse(httpRequest.responseText);
+        var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        var dateValue = new Date(weatherReport.daily.data[0].time);
+        var dayofWeek = dateValue.getDay();
+        var rows = document.querySelectorAll("section.week table tbody tr");
+//        retrieve the row cells
+        for (var i  = 0;i < rows.length; i++) {
+            var firstCell = rows[i].getElementsByTagName("td")[0];
+            var secondCell = rows[i].getElementsByTagName("td")[1];
+            var thirdCell = rows[i].getElementsByTagName("td")[2];
+//            set the week day for the row
+            firstCell.innerHTML = days[dayofWeek];
+            if (dayofWeek + 1 === 7) {
+                dayofWeek = 0;
+            }
+            else {
+                dayofWeek++;
+            }
+            var sun = Math.round((1 - weatherReport.daily.data[i].cloudCover) * 100, 0)
+//            change color of sun symbol based on %
+            if (sun > 90) {
+                secondCell.style.color = "rgb(255, 171, 0)"
+            }
+            else if (sun > 80) {
+                 secondCell.style.color = "rgb(255, 179, 25)"
+            }
+            else if (sun > 70) {
+                 secondCell.style.color = "rgb(255, 188, 51)"
+            }
+            else if (sun > 60) {
+                 secondCell.style.color = "rgb(255, 196, 77)"
+            }
+            else if (sun > 50) {
+                 secondCell.style.color = "rgb(255, 205, 102)"
+            }
+            else if (sun > 40) {
+                 secondCell.style.color = "rgb(255, 213, 128)"
+            }
+            else if (sun > 30) {
+                 secondCell.style.color = "rgb(255, 221, 153)"
+            }
+            else if (sun > 20) {
+                 secondCell.style.color = "rgb(255, 230, 179)"
+            }
+            else if (sun > 10) {
+                 secondCell.style.color = "rgb(255, 238, 204)"
+            }
+            else {
+                secondCell.style.color = "rgb(255, 247, 230)"
+            }
+            secondCell.style.fontSize = "2.5em";
+            thirdCell.innerHTML = sun + "%";
+        }
+//        turn on table
+        document.querySelector("section.week table caption").innerHTML = selectedCity;
+        document.querySelector("section.week table caption").style.display = "block";
+        document.querySelector("section.week table").style.display = "inline-block";
+        document.querySelector("section.week p.credit").style.display = "block";
+    }
 }
 
 //get the weather in responce to click events on city location choices
@@ -58,6 +124,8 @@ function getWeather(evt) {
 //    target request
     httpRequest.open("get", "solar.php?" + "lat=" + latitude + "&lng=" + longitude, true);
     httpRequest.send(null);
+//    event listener for onreadystatechange
+    httpRequest.onreadystatechange = fillWeather;
 }
 
 //retrieve the li elements holding city location choices
